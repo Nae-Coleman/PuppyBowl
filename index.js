@@ -77,6 +77,12 @@ const fetchSinglePlayer = async (id) => {
 
 const addNewPlayer = async (newPlayer) => {
   try {
+    const playerData = {
+      name: newPlayer.name,
+      breed: newPlayer.breed,
+      status: "Bench",
+      teamId: null,
+    };
     const response = await fetch(API_URL, {
       method: "POST", // we are sending data
       headers: {
@@ -85,13 +91,24 @@ const addNewPlayer = async (newPlayer) => {
       body: JSON.stringify(newPlayer), // convert JS object to JSON string
     });
 
-    const data = await response.json();
-    const addedPlayer = data.data.player || data.data;
+    const result = await response.json();
+    console.log("Add player result:", result);
 
-    if (!addedPlayer) return;
+    let newAddedPlayer;
+
+    if (result.data.player) {
+      newAddedPlayer = result.data.player;
+    } else if (result.data.newPlayer) {
+      newAddedPlayer = result.data.newPlayer;
+    } else if (result.data) {
+      newAddedPlayer = result.data;
+    } else {
+      console.error("No player returned from API");
+      return;
+    }
 
     //  Just add the new one locally (don’t refetch)
-    allPlayers.push(addedPlayer);
+    allPlayers.push(newAddedPlayer);
 
     //  Re-render so it appears right away
     render();

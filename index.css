@@ -3,12 +3,12 @@ body {
   font-family: Arial, sans-serif;
   margin: 20px;
   padding: 0;
-  background-color: #f9f9f9;
+  background-color: #48699b;
 }
 
 h1 {
   text-align: center;
-  color: #333;
+  color: #0c0c0c;
 }
 
 /* Selected player section */
@@ -43,12 +43,14 @@ form#add-player-form button {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
+  padding: 40px;
 }
 
 /* Individual player cards */
 .player-card {
-  border: 1px solid #ccc;
-  padding: 10px;
+  border: 4px solid #743939;
+  border-radius: 20rem;
+  padding: 50px;
   width: 150px;
   cursor: pointer;
   text-align: center;
@@ -64,8 +66,14 @@ form#add-player-form button {
 /* Puppy images */
 .player-card img,
 #selected-player img {
-  width: 100px;
-  height: 100px;
+  width: 150px;
+  height: 150px;
   object-fit: cover;
   border-radius: 8px;
+}
+
+.single-player img {
+  width: 25rem;
+  height: auto;
+  border-radius: 20rem;
 }
