@@ -8,6 +8,9 @@ let allPlayers = []; //all puppies being stored here ---←←←←←---
 let selectedPlayer = null; //user selected click puppy---←←←←←---
 ////////////////////////////
 
+const form = document.querySelector("#add-player-form");
+const container = document.querySelector("#container");
+const details = document.querySelector("#details");
 /**
  * Fetches all players from the API.
  * This function should not be doing any rendering
@@ -28,7 +31,7 @@ const fetchAllPlayers = async () => {
     const data = await response.json(); //turns in JS
     return data.data.players;
   } catch (error) {
-    console.error("Error fetching players:", error);
+    console.error(error);
     return [];
   }
 };
@@ -44,13 +47,13 @@ const fetchAllPlayers = async () => {
 
 //TODO
 
-const fetchSinglePlayer = async (playerId) => {
+const fetchSinglePlayer = async (id) => {
   try {
-    const response = await fetch(`${API_URL}/${playerId}`);
-    const result = await response.json();
-    return result.data.player;
+    const response = await fetch(`${API_URL}/${id}`);
+    const data = await response.json();
+    return data.data.player;
   } catch (error) {
-    console.error(`Error fetching player with id ${playerId}:`, error);
+    console.error(error);
   }
 };
 // fetchSinglePlayer(46305).then((player) => console.log(player));
@@ -82,21 +85,15 @@ const addNewPlayer = async (newPlayer) => {
       body: JSON.stringify(newPlayer), // convert JS object to JSON string
     });
 
-    const result = await response.json();
-    console.log("New player added:", result);
+    const data = await response.json();
+    const addedPlayer = data.data.player || data.data;
 
-    const addedPlayer =
-      result.data.player || result.data.newPlayer || result.data;
+    if (!addedPlayer) return;
 
-    if (!addedPlayer) {
-      console.error("No player returned from API:", result);
-      return;
-    }
-
-    // ✅ Just add the new one locally (don’t refetch)
+    //  Just add the new one locally (don’t refetch)
     allPlayers.push(addedPlayer);
 
-    // ✅ Re-render so it appears right away
+    //  Re-render so it appears right away
     render();
   } catch (error) {
     console.error("Error adding new player:", error);
@@ -119,50 +116,30 @@ const addNewPlayer = async (newPlayer) => {
 
 //TODO
 
-const removePlayer = async (playerId) => {
+const removePlayer = async (id) => {
   try {
-    const response = await fetch(`${API_URL}/${playerId}`, {
+    const response = await fetch(`${API_URL}/${id}`, {
       method: "DELETE",
     });
 
-    if (!response.ok) {
-      console.error(`Failed to remove player  ${playerId}`);
-      return;
-    }
+    if (!response.ok) return;
 
     // Remove from local allPlayers array
-    allPlayers = allPlayers.filter((player) => player.id !== playerId);
+    allPlayers = allPlayers.filter((player) => player.id !== id);
 
     // If this player was selected, clear the detail section
-    if (selectedPlayer && selectedPlayer.id === playerId) {
-      selectedPlayer = null;
-
-      const container = document.getElementById("container");
-      container.innerHTML = "<p>Select a puppy to see details 🐾</p>";
-    }
+    // if (selectedPlayer && selectedPlayer.id === id) {
+    //   selectedPlayer = null;
+    //   details.innerHTML = "<p>Select a puppy to see details</p>";
+    // }
 
     // Re-render the roster
     render();
   } catch (error) {
-    console.error(`Error removing player  ${playerId}:`, error);
+    console.error(error);
   }
 };
 
-const form = document.getElementById("add-player-form");
-
-// form.addEventListener("submit", async (event) => {
-//   event.preventDefault();
-
-//   const formData = new FormData(form);
-
-//   const newPlayer = {
-//     name: formData.get("name"),
-//     breed: formData.get("breed"),
-//   };
-
-//   await addNewPlayer(newPlayer);
-//   form.reset();
-// });
 /**
  * Updates html to display a list of all players or a single player page.
  *
@@ -184,24 +161,31 @@ const form = document.getElementById("add-player-form");
 // TODO
 
 const render = () => {
-  const container = document.getElementById("container");
   container.innerHTML = "";
 
-  allPlayers.forEach((player) => {
-    const card = document.createElement("div");
-    card.classList.add("player-card");
-    card.innerHTML = `
-      <h3>${player.name}</h3>
-      <img src="${player.imageUrl}" alt="${player.name}" />
-      <p>ID: ${player.id}</p>
-    `;
+  if (allPlayers.length === 0) {
+    container.innerHTML = "<p>No puppies yet!</p>";
+  } else {
+    container.innerHTML = allPlayers
+      .map(
+        (player) => `
+      <div class ="player-card" data-id="${player.id}">
+        <h3>${player.name}</h3>
+        <img src="${player.imageUrl}" alt="${player.name}" />
+        <p>ID: ${player.id}</p>
+      </div>
+    `
+      )
+      .join("");
+  }
 
+  const cards = document.querySelectorAll(".player-card");
+  cards.forEach((card) => {
     card.addEventListener("click", async () => {
-      const fullPlayer = await fetchSinglePlayer(player.id);
-      renderSinglePlayer(fullPlayer);
+      const playerId = Number(card.dataset.id);
+      const fullPlayer = await fetchSinglePlayer(playerId);
+      if (fullPlayer) renderSinglePlayer(fullPlayer);
     });
-
-    container.appendChild(card);
   });
 };
 
@@ -209,7 +193,6 @@ const renderSinglePlayer = (player) => {
   // Save the selected player in state
   selectedPlayer = player;
 
-  const container = document.getElementById("container");
   container.innerHTML = `
     <div class="single-player">
       <h2>${player.name}</h2>
@@ -255,7 +238,6 @@ const setupForm = () => {
     await addNewPlayer(newPlayer);
 
     form.reset(); // clears the input fields
-    console.log("setupForm ran");
   });
 };
 
@@ -264,7 +246,9 @@ const setupForm = () => {
  * HOWEVER....
  */
 const init = async () => {
+  console.log("Container:", container);
   allPlayers = await fetchAllPlayers();
+  console.log("All players:", allPlayers);
   setupForm(); //Before we render, what do we always need...?
   render();
 };
